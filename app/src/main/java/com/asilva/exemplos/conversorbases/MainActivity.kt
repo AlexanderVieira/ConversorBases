@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
 
             if (number_edittext.text.isNotEmpty()){
 
-                val inputNumber = number_edittext.text.toString().toInt()
+                val inputNumber = number_edittext.text.toString().toLong()
                 val inputId = input_radiogroup.checkedRadioButtonId
                 val outputId = output_radiogroup.checkedRadioButtonId
 
@@ -48,9 +48,18 @@ class MainActivity : AppCompatActivity() {
         else -> 0
     }
 
-    fun convertBase(number: Int, from: Int, to: Int):String{
+    fun convertBase(number: Long, from: Int, to: Int):String{
 
-        if (from == 10 && to < 10){
+        if (from == 10 && to <= 16){
+
+            if (to == 16){
+
+                val binaryBase = to/8
+                val binTemp = decimalToOther(number, binaryBase)
+                val hex = binaryToHex(binTemp.toLong(), to)
+                return String.format("(" + hex + ")" + to)
+
+            }
 
             val result = decimalToOther(number, to)
             return result
@@ -65,19 +74,24 @@ class MainActivity : AppCompatActivity() {
             val result = binaryToOctal(number, to)
             return String.format("(" + result + ")8")
         }
+        else if(from < 10 && to == 16){
+
+            val result = binaryToHex(number, to)
+            return String.format("(" + result + ")16")
+        }
 
         return number.toString()
     }
 
-    fun decimalToOther(number: Int, base: Int) :String{
+    fun decimalToOther(number: Long, base: Int) :String{
 
-        val binDigits = mutableListOf<Int>()
+        val binDigits = mutableListOf<Long>()
         var result = number
 
         if (base == 8){
 
             var numOctal = 0
-            var numDecimal = number
+            var numDecimal = number.toInt()
 
             var i = 1
             while (numDecimal != 0){
@@ -95,10 +109,11 @@ class MainActivity : AppCompatActivity() {
             binDigits.add(rest)
         }while (result > 0)
         binDigits.reverse()
-        return String.format("(" + binDigits.joinToString("") + ")" + base)
+        //return String.format("(" + binDigits.joinToString("") + ")" + base)
+        return binDigits.joinToString("")
     }
 
-    fun otherToDecimal(number: Int, base: Int): Int{
+    fun otherToDecimal(number: Long, base: Int): Int{
 
         val numberStr = number.toString()
         var result = 0.0
@@ -112,7 +127,7 @@ class MainActivity : AppCompatActivity() {
         return result.toInt()
     }
 
-    fun binaryToOctal(number: Int, base: Int): String{
+    fun binaryToOctal(number: Long, base: Int): String{
 
         if (base == 8){
 
@@ -130,5 +145,68 @@ class MainActivity : AppCompatActivity() {
             i *= 10
         }
         return numOctal.toString()
+    }
+
+    fun binaryToHex(number: Long, base: Int): String{
+
+        var binTemp = completeNumber(number.toString())
+        val q = binTemp.length/4
+        var hex = ""
+        //println("$q")
+
+        for (i in 0..q-1){
+
+            //println("$i")
+
+            val block = binTemp.substring(4*i, 4*i+4)
+            val blockToLong = block.toLong()
+            val binaryBase = base/8
+            val decTemp = otherToDecimal(blockToLong, binaryBase)
+
+            //println("$block $decTemp")
+
+            hex += when(decTemp){
+                10 -> "A"
+                11 -> "B"
+                12 -> "C"
+                13 -> "D"
+                14 -> "E"
+                15 -> "F"
+                else -> decTemp
+            }
+        }
+        return hex
+    }
+
+    fun completeNumber(value: String): String {
+
+        val rest = value.length % 4
+        var binTemp = value
+
+        if(rest == 1){
+
+            for (i in 0..rest + 1) {
+                binTemp = "0" + binTemp
+            }
+            return binTemp
+
+        }
+
+        if(rest == 3){
+
+            for (i in 0..rest - 3) {
+
+                binTemp = "0" + binTemp
+
+            }
+            return binTemp
+        }
+
+        for (i in 0..rest - 1) {
+
+            binTemp = "0" + binTemp
+
+        }
+        return binTemp
     }
 }
